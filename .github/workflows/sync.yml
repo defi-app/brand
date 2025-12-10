@@ -1,0 +1,50 @@
+name: Sync Google Drive → GitHub
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Write service account JSON to file
+        run: |
+          mkdir -p /workdir
+          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > /workdir/service-account.json
+
+      - name: Install rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
+
+      - name: Sync from Google Drive
+        run: |
+          # Pull the Brand folder from Drive to a local directory
+          rclone sync gdrive:Brand ./drive-sync --verbose
+
+      - name: Sync into repo structure
+        run: |
+          rsync -av --delete ./drive-sync/ ./
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "defi-app-bot"
+          git config user.email "brand-bot@defi.app"
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "chore(sync): update brand assets from Google Drive"
+            git push
+          else
+            echo "No changes to commit"
+          fi
