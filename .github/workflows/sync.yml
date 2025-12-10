@@ -50,7 +50,7 @@ jobs:
           
           if [ -n "$(git status --porcelain)" ]; then
             git add .
-            git commit -m "chore(sync): update brand assets from Google Drive"            
+            git commit -m "chore(sync): update brand assets from Google Drive"
             git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
           else
             echo "No changes to commit"
