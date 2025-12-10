@@ -8,14 +8,14 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Write service account JSON to file
-        run: |          
-           echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" | base64 --decode > service-account.json
+        run: |
+          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" | base64 --decode > service-account.json
 
       - name: Install rclone
         run: |
@@ -27,19 +27,27 @@ jobs:
           echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
 
       - name: Sync from Google Drive
+        # This downloads the "Brand" folder contents into a temporary folder "drive-sync"
         run: |
-          # Pull the Brand folder from Drive to a local directory
-          rclone sync "gdrive:Defi App Org/Brand" ./drive-sync --verbose
+          rclone sync "gdrive:Brand" ./drive-sync \
+            --drive-team-drive 0ADiUEtEuadcKUk9PVA \
+            --verbose
 
       - name: Sync into repo structure
+        # This moves files from "drive-sync" to root, but PROTECTS .git and .github
         run: |
-          rsync -av --delete ./drive-sync/ ./
+          rsync -av --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='service-account.json' \
+            --exclude='drive-sync/' \
+            ./drive-sync/ ./
 
       - name: Commit and push changes
         run: |
           git config user.name "defi-app-bot"
           git config user.email "brand-bot@defi.app"
-
+          
           if [ -n "$(git status --porcelain)" ]; then
             git add .
             git commit -m "chore(sync): update brand assets from Google Drive"
