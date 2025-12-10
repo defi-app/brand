@@ -14,9 +14,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Write service account JSON to file
-        run: |
-          mkdir -p /workdir
-          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > /workdir/service-account.json
+        run: |          
+          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > service-account.json
 
       - name: Install rclone
         run: |
