@@ -7,7 +7,7 @@ on:
     - cron: "0 2 * * *"
 
 permissions:
-  contents: read # Write is granted via PAT used in checkout/push
+  contents: read
 
 jobs:
   sync-drive:
@@ -19,33 +19,28 @@ jobs:
       SYNC_DIR: drive-sync
       RCLONE_CONFIG_PATH: ${{ github.workspace }}/rclone.conf
 
-      # Environment specific to your setup
-      TEAM_DRIVE_ID: 0ADiUEtEuadcKUk9PVA # Your "Defi App Org" Shared Drive ID
-      DRIVE_SOURCE_PATH: Brand           # The folder name inside the Shared Drive
+      TEAM_DRIVE_ID: 0ADiUEtEuadcKUk9PVA
+      DRIVE_SOURCE_PATH: Brand
 
     steps:
-      # --- Checkout Step ---
       - name: Checkout repository using PAT (write-enabled)
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_PAT }}   # Use PAT so pushes won't use github-actions[bot]
-          persist-credentials: false     # Do not store token in local git config
+          token: ${{ secrets.GH_PAT }}
+          persist-credentials: false
           ref: ${{ env.SYNC_BRANCH }}
 
-      # --- Git Identity Step ---
       - name: Set up Git identity
         run: |
           git config user.name "defi-app-bot"
           git config user.email "brand-bot@defi.app"
 
-      # --- Rclone Install Step (streamlined) ---
       - name: Install rclone
         shell: bash
         run: |
           curl https://rclone.org/install.sh | sudo bash
           rclone version
 
-      # --- Rclone Configuration Step (simplified and targeted) ---
       - name: Configure rclone for Google Drive (service account)
         shell: bash
         run: |
@@ -57,10 +52,9 @@ jobs:
           service_account_file = service-account.json
           team_drive = ${TEAM_DRIVE_ID}
           EOF
-          
+
           rclone --config "${RCLONE_CONFIG_PATH}" about gdrive:
 
-      # --- Sync Step ---
       - name: Sync from Google Drive to temporary directory
         shell: bash
         run: |
@@ -72,7 +66,6 @@ jobs:
             --delete-excluded \
             --verbose
 
-      # --- Move Files into Repo Root and Cleanup ---
       - name: Move synced files to root and cleanup
         shell: bash
         run: |
@@ -84,12 +77,17 @@ jobs:
             --exclude='drive-sync/' \
             "./${SYNC_DIR}/" "./"
 
-      # --- Commit Step ---
       - name: Commit changes (if any)
         id: commit_status
         shell: bash
         run: |
+          # --- PATCH START ---
+          # CRITICAL FIX: Add temporary files to .gitignore to prevent committing secrets (Push Protection Error)
+          echo "service-account.json" >> .gitignore
+          echo "rclone.conf" >> .gitignore
+          
           git add -A
+          # --- PATCH END ---
 
           if git diff --cached --quiet; then
             echo "status=no_changes" >> "$GITHUB_OUTPUT"
@@ -101,7 +99,6 @@ jobs:
           git commit -m "${COMMIT_MSG}"
           echo "status=committed" >> "$GITHUB_OUTPUT"
 
-      # --- Push Step ---
       - name: Push changes using PAT
         if: steps.commit_status.outputs.status == 'committed'
         env:
@@ -116,7 +113,6 @@ jobs:
           git remote set-url origin "https://appdefi:${GH_PAT}@github.com/defi-app/brand.git"
           git push origin "HEAD:${SYNC_BRANCH}"
 
-      # --- Cleanup sensitive files ---
       - name: Cleanup sensitive files
         if: always()
         run: |
