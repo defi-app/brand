@@ -29,7 +29,7 @@ jobs:
       - name: Sync from Google Drive
         run: |
           # Pull the Brand folder from Drive to a local directory
-          rclone sync gdrive:Brand ./drive-sync --verbose
+          rclone sync "gdrive:Defi App Org/Brand" ./drive-sync --verbose
 
       - name: Sync into repo structure
         run: |
