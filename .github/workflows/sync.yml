@@ -49,10 +49,7 @@ jobs:
       - name: Configure rclone for Google Drive (service account)
         shell: bash
         run: |
-          # 1. Write service account file from YOUR secret name
-          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > service-account.json
-
-          # 2. Create rclone config directly using the Team Drive ID
+          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" | base64 --decode > service-account.json
           cat > "${RCLONE_CONFIG_PATH}" <<EOF
           [gdrive]
           type = drive
@@ -60,8 +57,7 @@ jobs:
           service_account_file = service-account.json
           team_drive = ${TEAM_DRIVE_ID}
           EOF
-
-          # Check connection
+          
           rclone --config "${RCLONE_CONFIG_PATH}" about gdrive:
 
       # --- Sync Step ---
@@ -69,7 +65,6 @@ jobs:
         shell: bash
         run: |
           mkdir -p "${SYNC_DIR}"
-          # Sync only the "Brand" folder (DRIVE_SOURCE_PATH) from the Team Drive (gdrive:)
           rclone --config "${RCLONE_CONFIG_PATH}" sync "gdrive:${DRIVE_SOURCE_PATH}" "${SYNC_DIR}" \
             --fast-list \
             --transfers 8 \
@@ -81,7 +76,6 @@ jobs:
       - name: Move synced files to root and cleanup
         shell: bash
         run: |
-          # Use rsync to move contents from temporary folder to repo root safely
           rsync -av --delete \
             --exclude='.git/' \
             --exclude='.github/' \
@@ -95,10 +89,8 @@ jobs:
         id: commit_status
         shell: bash
         run: |
-          # Stage changes first
           git add -A
 
-          # Determine if there are staged changes
           if git diff --cached --quiet; then
             echo "status=no_changes" >> "$GITHUB_OUTPUT"
             echo "No changes to commit."
@@ -121,10 +113,7 @@ jobs:
             exit 1
           fi
 
-          # Ensure remote uses the PAT, not github-actions[bot]
           git remote set-url origin "https://appdefi:${GH_PAT}@github.com/defi-app/brand.git"
-
-          # Push to the configured branch
           git push origin "HEAD:${SYNC_BRANCH}"
 
       # --- Cleanup sensitive files ---
