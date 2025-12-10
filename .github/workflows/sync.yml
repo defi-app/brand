@@ -1,56 +1,134 @@
 name: Sync Google Drive → GitHub
 
 on:
-  schedule:
-    - cron: "0 * * * *"
   workflow_dispatch:
+  schedule:
+    # Runs every day at 02:00 UTC
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: read # Write is granted via PAT used in checkout/push
 
 jobs:
-  sync:
+  sync-drive:
+    name: Sync Google Drive assets into repo
     runs-on: ubuntu-latest
-    
+
+    env:
+      SYNC_BRANCH: main
+      SYNC_DIR: drive-sync
+      RCLONE_CONFIG_PATH: ${{ github.workspace }}/rclone.conf
+
+      # Environment specific to your setup
+      TEAM_DRIVE_ID: 0ADiUEtEuadcKUk9PVA # Your "Defi App Org" Shared Drive ID
+      DRIVE_SOURCE_PATH: Brand           # The folder name inside the Shared Drive
+
     steps:
-      - name: Checkout repo
+      # --- Checkout Step ---
+      - name: Checkout repository using PAT (write-enabled)
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}   # Use PAT so pushes won't use github-actions[bot]
+          persist-credentials: false     # Do not store token in local git config
+          ref: ${{ env.SYNC_BRANCH }}
 
-      - name: Write service account JSON to file
-        run: |
-          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" | base64 --decode > service-account.json
-
-      - name: Install rclone
-        run: |
-          curl https://rclone.org/install.sh | sudo bash
-
-      - name: Configure rclone
-        run: |
-          mkdir -p ~/.config/rclone
-          echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
-
-      - name: Sync from Google Drive
-        run: |
-          rclone sync "gdrive:Brand" ./drive-sync \
-            --drive-team-drive 0ADiUEtEuadcKUk9PVA \
-            --verbose
-
-      - name: Sync into repo structure
-        run: |
-          rsync -av --delete \
-            --exclude='.git/' \
-            --exclude='.github/' \
-            --exclude='service-account.json' \
-            --exclude='drive-sync/' \
-            ./drive-sync/ ./
-
-      - name: Commit and push changes
+      # --- Git Identity Step ---
+      - name: Set up Git identity
         run: |
           git config user.name "defi-app-bot"
           git config user.email "brand-bot@defi.app"
-          
-          if [ -n "$(git status --porcelain)" ]; then
-            git add .
-            git commit -m "chore(sync): update brand assets from Google Drive"
-            git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git
-            git push origin HEAD:main
-          else
-            echo "No changes to commit"
+
+      # --- Rclone Install Step (streamlined) ---
+      - name: Install rclone
+        shell: bash
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+          rclone version
+
+      # --- Rclone Configuration Step (simplified and targeted) ---
+      - name: Configure rclone for Google Drive (service account)
+        shell: bash
+        run: |
+          # 1. Write service account file from YOUR secret name
+          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > service-account.json
+
+          # 2. Create rclone config directly using the Team Drive ID
+          cat > "${RCLONE_CONFIG_PATH}" <<EOF
+          [gdrive]
+          type = drive
+          scope = drive.readonly
+          service_account_file = service-account.json
+          team_drive = ${TEAM_DRIVE_ID}
+          EOF
+
+          # Check connection
+          rclone --config "${RCLONE_CONFIG_PATH}" about gdrive:
+
+      # --- Sync Step ---
+      - name: Sync from Google Drive to temporary directory
+        shell: bash
+        run: |
+          mkdir -p "${SYNC_DIR}"
+          # Sync only the "Brand" folder (DRIVE_SOURCE_PATH) from the Team Drive (gdrive:)
+          rclone --config "${RCLONE_CONFIG_PATH}" sync "gdrive:${DRIVE_SOURCE_PATH}" "${SYNC_DIR}" \
+            --fast-list \
+            --transfers 8 \
+            --checkers 16 \
+            --delete-excluded \
+            --verbose
+
+      # --- Move Files into Repo Root and Cleanup ---
+      - name: Move synced files to root and cleanup
+        shell: bash
+        run: |
+          # Use rsync to move contents from temporary folder to repo root safely
+          rsync -av --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='rclone.conf' \
+            --exclude='service-account.json' \
+            --exclude='drive-sync/' \
+            "./${SYNC_DIR}/" "./"
+
+      # --- Commit Step ---
+      - name: Commit changes (if any)
+        id: commit_status
+        shell: bash
+        run: |
+          # Stage changes first
+          git add -A
+
+          # Determine if there are staged changes
+          if git diff --cached --quiet; then
+            echo "status=no_changes" >> "$GITHUB_OUTPUT"
+            echo "No changes to commit."
+            exit 0
           fi
+
+          COMMIT_MSG="chore(sync): update brand assets from Google Drive [skip ci]"
+          git commit -m "${COMMIT_MSG}"
+          echo "status=committed" >> "$GITHUB_OUTPUT"
+
+      # --- Push Step ---
+      - name: Push changes using PAT
+        if: steps.commit_status.outputs.status == 'committed'
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        shell: bash
+        run: |
+          if [ -z "${GH_PAT}" ]; then
+            echo "Missing secret: GH_PAT" >&2
+            exit 1
+          fi
+
+          # Ensure remote uses the PAT, not github-actions[bot]
+          git remote set-url origin "https://appdefi:${GH_PAT}@github.com/defi-app/brand.git"
+
+          # Push to the configured branch
+          git push origin "HEAD:${SYNC_BRANCH}"
+
+      # --- Cleanup sensitive files ---
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f service-account.json rclone.conf
