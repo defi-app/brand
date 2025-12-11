@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defi App | Brand Assets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        main {
+            width: 100%;
+            max-width: 800px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            padding: 30px 40px;
+        }
+        h1 {
+            font-weight: 700;
+            color: #000;
+            margin-top: 0;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
+        }
+        #file-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        #file-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+        }
+        #file-list li:last-child {
+            border-bottom: none;
+        }
+        #file-list a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 400;
+            transition: color 0.2s;
+        }
+        #file-list a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .icon {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+        }
+        .loading {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Defi App Brand Assets</h1>
+        <ul id="file-list">
+            <li class="loading">Loading assets...</li>
+        </ul>
+    </main>
+
+    <script>
+        // --- Configuration ---
+        // These are automatically determined from the window's location,
+        // which works perfectly when hosted on GitHub Pages.
+        const [owner, repo] = window.location.hostname.split('.')[0].split('/');
+
+        const fileListElement = document.getElementById('file-list');
+        const apiUrl = `https://api.github.com/repos/defi-app/brand/contents/`;
+
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`GitHub API request failed: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                fileListElement.innerHTML = ''; // Clear loading message
+
+                // Sort directories first, then files, all alphabetically
+                data.sort((a, b) => {
+                    if (a.type === b.type) {
+                        return a.name.localeCompare(b.name);
+                    }
+                    return a.type === 'dir' ? -1 : 1;
+                });
+
+                data.forEach(item => {
+                    // Don't list the index.html file itself or other git-related files
+                    if (item.name.startsWith('.') || item.name === 'index.html') {
+                        return;
+                    }
+
+                    const listItem = document.createElement('li');
+                    
+                    // Use download_url for a direct link to the raw asset
+                    const link = document.createElement('a');
+                    link.href = item.download_url;
+                    link.textContent = item.name;
+
+                    // Add an icon for file vs. directory
+                    const icon = document.createElement('span');
+                    icon.className = 'icon';
+                    icon.innerHTML = item.type === 'dir' 
+                        ? '&#128193;' // 📁 Folder emoji
+                        : '&#128441;'; // 📄 File emoji
+                    
+                    listItem.appendChild(icon);
+                    listItem.appendChild(link);
+                    fileListElement.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching repository contents:", error);
+                fileListElement.innerHTML = `<li class="loading">Could not load assets. Please try again later.</li>`;
+            });
+    </script>
+</body>
+</html>
