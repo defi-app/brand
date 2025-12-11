@@ -76,13 +76,13 @@
     </main>
 
     <script>
-        // --- Configuration ---
-        // These are automatically determined from the window's location,
-        // which works perfectly when hosted on GitHub Pages.
-        const [owner, repo] = window.location.hostname.split('.')[0].split('/');
-
         const fileListElement = document.getElementById('file-list');
         const apiUrl = `https://api.github.com/repos/defi-app/brand/contents/`;
+
+        // --- CHANGE ---
+        // Create a list of files to ignore in the directory listing.
+        const ignoreList = ['index.html', 'CNAME'];
+        // --- END CHANGE ---
 
         fetch(apiUrl)
             .then(response => {
@@ -94,7 +94,6 @@
             .then(data => {
                 fileListElement.innerHTML = ''; // Clear loading message
 
-                // Sort directories first, then files, all alphabetically
                 data.sort((a, b) => {
                     if (a.type === b.type) {
                         return a.name.localeCompare(b.name);
@@ -103,24 +102,23 @@
                 });
 
                 data.forEach(item => {
-                    // Don't list the index.html file itself or other git-related files
-                    if (item.name.startsWith('.') || item.name === 'index.html') {
-                        return;
+                    // --- CHANGE ---
+                    // Check if the item name is in our ignore list or is a dotfile.
+                    if (item.name.startsWith('.') || ignoreList.includes(item.name)) {
+                        return; // Skip this item
                     }
+                    // --- END CHANGE ---
 
                     const listItem = document.createElement('li');
-                    
-                    // Use download_url for a direct link to the raw asset
                     const link = document.createElement('a');
                     link.href = item.download_url;
                     link.textContent = item.name;
 
-                    // Add an icon for file vs. directory
                     const icon = document.createElement('span');
                     icon.className = 'icon';
                     icon.innerHTML = item.type === 'dir' 
-                        ? '&#128193;' // 📁 Folder emoji
-                        : '&#128441;'; // 📄 File emoji
+                        ? '&#128193;' // Folder emoji
+                        : '&#128441;'; // File emoji
                     
                     listItem.appendChild(icon);
                     listItem.appendChild(link);
