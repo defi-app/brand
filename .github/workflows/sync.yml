@@ -76,18 +76,18 @@ jobs:
             --exclude='service-account.json' \
             --exclude='drive-sync/' \
             "./${SYNC_DIR}/" "./"
+          
+          # Clean up the temporary sync directory
+          rm -rf "${SYNC_DIR}"
 
       - name: Commit changes (if any)
         id: commit_status
         shell: bash
         run: |
-          # --- PATCH START ---
-          # CRITICAL FIX: Add temporary files to .gitignore to prevent committing secrets (Push Protection Error)
           echo "service-account.json" >> .gitignore
           echo "rclone.conf" >> .gitignore
           
           git add -A
-          # --- PATCH END ---
 
           if git diff --cached --quiet; then
             echo "status=no_changes" >> "$GITHUB_OUTPUT"
@@ -95,7 +95,7 @@ jobs:
             exit 0
           fi
 
-          COMMIT_MSG="chore(sync): update brand assets from Google Drive [skip ci]"
+          COMMIT_MSG="chore(sync): update brand assets from Google Drive"
           git commit -m "${COMMIT_MSG}"
           echo "status=committed" >> "$GITHUB_OUTPUT"
 
