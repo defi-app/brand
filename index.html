@@ -1,134 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defi App | Brand Assets</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Manrope', sans-serif;
-            background-color: #f8f9fa;
-            color: #212529;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
-        main {
-            width: 100%;
-            max-width: 800px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            padding: 30px 40px;
-        }
-        h1 {
-            font-weight: 700;
-            color: #000;
-            margin-top: 0;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 15px;
-        }
-        #file-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        #file-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            align-items: center;
-        }
-        #file-list li:last-child {
-            border-bottom: none;
-        }
-        #file-list a {
-            text-decoration: none;
-            color: #007bff;
-            font-weight: 400;
-            transition: color 0.2s;
-        }
-        #file-list a:hover {
-            color: #0056b3;
-            text-decoration: underline;
-        }
-        .icon {
-            margin-right: 12px;
-            width: 20px;
-            height: 20px;
-        }
-        .loading {
-            color: #6c757d;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defi App | Brand Assets</title>
+
+  <!-- Manrope (public Google Font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    :root {
+      --bg-0: #0b0d10;
+      --surface-0: #151922;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --text-default: #e6e8ec;
+      --text-muted: #9aa0ad;
+      --accent: #5b8cff;
+
+      /* spacing scale */
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+
+      /* shape */
+      --radius-md: 12px;
+
+      /* elevation */
+      --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+      margin: 0;
+      padding: var(--space-6);
+      min-height: 100vh;
+
+      font-family:
+        'Manrope',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        Ubuntu,
+        Cantarell,
+        'Helvetica Neue',
+        sans-serif;
+
+      background-color: var(--bg-0);
+      color: var(--text-default);
+
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    main {
+      width: 100%;
+      max-width: 820px;
+      background-color: var(--surface-0);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-8);
+    }
+
+    h1 {
+      margin: 0 0 var(--space-6) 0;
+      font-weight: 600;
+      font-size: 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: var(--space-4);
+    }
+
+    #file-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #file-list li {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    #file-list li:last-child {
+      border-bottom: none;
+    }
+
+    #file-list a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    #file-list a:hover {
+      text-decoration: underline;
+    }
+
+    .icon {
+      margin-right: var(--space-3);
+      width: 20px;
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    .loading {
+      color: var(--text-muted);
+    }
+  </style>
 </head>
+
 <body>
-    <main>
-        <h1>Defi App Brand Assets</h1>
-        <ul id="file-list">
-            <li class="loading">Loading assets...</li>
-        </ul>
-    </main>
+  <main>
+    <h1>Defi App Brand Assets</h1>
+    <ul id="file-list">
+      <li class="loading">Loading assets...</li>
+    </ul>
+  </main>
 
-    <script>
-        const fileListElement = document.getElementById('file-list');
-        const apiUrl = `https://api.github.com/repos/defi-app/brand/contents/`;
+  <script>
+    const fileListElement = document.getElementById('file-list');
+    const apiUrl = 'https://api.github.com/repos/defi-app/brand/contents/';
 
-        // --- CHANGE ---
-        // Create a list of files to ignore in the directory listing.
-        const ignoreList = ['index.html', 'CNAME'];
-        // --- END CHANGE ---
+    const ignoreList = ['index.html', 'CNAME'];
 
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`GitHub API request failed: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                fileListElement.innerHTML = ''; // Clear loading message
+    fetch(apiUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`GitHub API request failed: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        fileListElement.innerHTML = '';
 
-                data.sort((a, b) => {
-                    if (a.type === b.type) {
-                        return a.name.localeCompare(b.name);
-                    }
-                    return a.type === 'dir' ? -1 : 1;
-                });
+        data
+          .sort((a, b) => {
+            if (a.type === b.type) {
+              return a.name.localeCompare(b.name);
+            }
+            return a.type === 'dir' ? -1 : 1;
+          })
+          .forEach(item => {
+            if (item.name.startsWith('.') || ignoreList.includes(item.name)) {
+              return;
+            }
 
-                data.forEach(item => {
-                    // --- CHANGE ---
-                    // Check if the item name is in our ignore list or is a dotfile.
-                    if (item.name.startsWith('.') || ignoreList.includes(item.name)) {
-                        return; // Skip this item
-                    }
-                    // --- END CHANGE ---
+            const listItem = document.createElement('li');
 
-                    const listItem = document.createElement('li');
-                    const link = document.createElement('a');
-                    link.href = item.download_url;
-                    link.textContent = item.name;
+            const icon = document.createElement('span');
+            icon.className = 'icon';
+            icon.innerHTML = item.type === 'dir'
+              ? '&#128193;'
+              : '&#128441;';
 
-                    const icon = document.createElement('span');
-                    icon.className = 'icon';
-                    icon.innerHTML = item.type === 'dir' 
-                        ? '&#128193;' // Folder emoji
-                        : '&#128441;'; // File emoji
-                    
-                    listItem.appendChild(icon);
-                    listItem.appendChild(link);
-                    fileListElement.appendChild(listItem);
-                });
-            })
-            .catch(error => {
-                console.error("Error fetching repository contents:", error);
-                fileListElement.innerHTML = `<li class="loading">Could not load assets. Please try again later.</li>`;
-            });
-    </script>
+            const link = document.createElement('a');
+            link.href = item.download_url;
+            link.textContent = item.name;
+
+            listItem.appendChild(icon);
+            listItem.appendChild(link);
+            fileListElement.appendChild(listItem);
+          });
+      })
+      .catch(error => {
+        console.error('Error fetching repository contents:', error);
+        fileListElement.innerHTML =
+          '<li class="loading">Could not load assets. Please try again later.</li>';
+      });
+  </script>
 </body>
 </html>
