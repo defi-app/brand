@@ -75,6 +75,8 @@ jobs:
             --exclude='rclone.conf' \
             --exclude='service-account.json' \
             --exclude='drive-sync/' \
+            --exclude='.nojekyll' \
+            --exclude='CNAME' \
             "./${SYNC_DIR}/" "./"
           
           # Clean up the temporary sync directory
