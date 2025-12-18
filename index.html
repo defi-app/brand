@@ -130,9 +130,32 @@
 
   <script>
     const fileListElement = document.getElementById('file-list');
-    const apiUrl = 'https://api.github.com/repos/defi-app/brand/contents/';
+    
+    // Get the current path from the URL query string (e.g. ?path=Icons)
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPath = urlParams.get('path') || '';
 
-    const ignoreList = ['index.html', 'CNAME'];
+    // API URL points to the specific path
+    const apiUrl = `https://api.github.com/repos/defi-app/brand/contents/${currentPath}`;
+
+    const ignoreList = ['index.html', 'CNAME', '.nojekyll', '.gitignore'];
+
+    // 1. Add an "Up" link if we are in a subfolder
+    if (currentPath) {
+      const upLi = document.createElement('li');
+      const upLink = document.createElement('a');
+      upLink.textContent = '.. (Up one level)';
+      
+      // Calculate parent path
+      const parts = currentPath.split('/');
+      parts.pop();
+      const parentPath = parts.join('/');
+      
+      upLink.href = parentPath ? `?path=${parentPath}` : '?';
+      
+      upLi.appendChild(upLink);
+      fileListElement.appendChild(upLi);
+    }
 
     fetch(apiUrl)
       .then(response => {
@@ -142,10 +165,8 @@
         return response.json();
       })
       .then(data => {
-        fileListElement.innerHTML = '';
-
-        data
-          .sort((a, b) => {
+        // Sort: Directories first, then files
+        data.sort((a, b) => {
             if (a.type === b.type) {
               return a.name.localeCompare(b.name);
             }
@@ -160,13 +181,21 @@
 
             const icon = document.createElement('span');
             icon.className = 'icon';
-            icon.innerHTML = item.type === 'dir'
-              ? '&#128193;'
-              : '&#128441;';
+            icon.innerHTML = item.type === 'dir' ? '&#128193;' : '&#128441;';
 
             const link = document.createElement('a');
-            link.href = item.download_url;
             link.textContent = item.name;
+
+            // 2. LOGIC FIX: Handle directories vs files
+            if (item.type === 'dir') {
+              // Link to the same page with a new query parameter
+              link.href = `?path=${encodeURIComponent(item.path)}`;
+              link.style.fontWeight = 'bold';
+            } else {
+              // Direct download link for files
+              link.href = item.download_url;
+              link.target = '_blank'; // Optional: open files in new tab
+            }
 
             listItem.appendChild(icon);
             listItem.appendChild(link);
@@ -175,9 +204,12 @@
       })
       .catch(error => {
         console.error('Error fetching repository contents:', error);
-        fileListElement.innerHTML =
-          '<li class="loading">Could not load assets. Please try again later.</li>';
+        const errorMsg = document.createElement('li');
+        errorMsg.className = 'loading';
+        errorMsg.textContent = 'Could not load assets. API rate limit may be exceeded or path is invalid.';
+        fileListElement.appendChild(errorMsg);
       });
   </script>
 </body>
 </html>
+
