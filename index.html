@@ -72,6 +72,12 @@
       padding: var(--space-8);
     }
 
+    .logo {
+      height: 80px;
+      margin-bottom: var(--space-6);
+      display: block;
+    }
+
     h1 {
       margin: 0 0 var(--space-6) 0;
       font-weight: 600;
@@ -122,6 +128,7 @@
 
 <body>
   <main>
+    <img src="https://raw.githubusercontent.com/defi-app/brand/main/Logos/Light/defi-app-wordmark-horizontal-light.svg" alt="Defi App" class="logo">
     <h1>Defi App Brand Assets</h1>
     <ul id="file-list">
       <li class="loading">Loading assets...</li>
@@ -140,23 +147,6 @@
 
     const ignoreList = ['index.html', 'CNAME', '.nojekyll', '.gitignore'];
 
-    // 1. Add an "Up" link if we are in a subfolder
-    if (currentPath) {
-      const upLi = document.createElement('li');
-      const upLink = document.createElement('a');
-      upLink.textContent = '.. (Up one level)';
-      
-      // Calculate parent path
-      const parts = currentPath.split('/');
-      parts.pop();
-      const parentPath = parts.join('/');
-      
-      upLink.href = parentPath ? `?path=${parentPath}` : '?';
-      
-      upLi.appendChild(upLink);
-      fileListElement.appendChild(upLi);
-    }
-
     fetch(apiUrl)
       .then(response => {
         if (!response.ok) {
@@ -165,6 +155,32 @@
         return response.json();
       })
       .then(data => {
+        // Clear the loading message
+        fileListElement.innerHTML = '';
+
+        // Add an "Up" link if we are in a subfolder
+        if (currentPath) {
+          const upLi = document.createElement('li');
+          
+          const upIcon = document.createElement('span');
+          upIcon.className = 'icon';
+          upIcon.textContent = '↩'; // Return arrow icon
+          
+          const upLink = document.createElement('a');
+          upLink.textContent = '..';
+          
+          // Calculate parent path
+          const parts = currentPath.split('/');
+          parts.pop();
+          const parentPath = parts.join('/');
+          
+          upLink.href = parentPath ? `?path=${parentPath}` : '?';
+          
+          upLi.appendChild(upIcon);
+          upLi.appendChild(upLink);
+          fileListElement.appendChild(upLi);
+        }
+
         // Sort: Directories first, then files
         data.sort((a, b) => {
             if (a.type === b.type) {
@@ -181,7 +197,7 @@
 
             const icon = document.createElement('span');
             icon.className = 'icon';
-            icon.innerHTML = item.type === 'dir' ? '&#128193;' : '&#128441;';
+            icon.textContent = item.type === 'dir' ? '📁' : '🖼️';
 
             const link = document.createElement('a');
             link.textContent = item.name;
@@ -212,4 +228,5 @@
   </script>
 </body>
 </html>
+
 
