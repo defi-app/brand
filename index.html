@@ -197,7 +197,7 @@
 
             const icon = document.createElement('span');
             icon.className = 'icon';
-            icon.innerHTML = item.type === 'dir' ? '&#128193;' : '&#128441;';
+            icon.textContent = item.type === 'dir' ? '📁' : '🖼️';
 
             const link = document.createElement('a');
             link.textContent = item.name;
